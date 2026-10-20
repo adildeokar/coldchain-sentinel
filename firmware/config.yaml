@@ -1,0 +1,53 @@
+# ColdChain Sentinel — edge device configuration (Raspberry Pi 4 Model B)
+# Values under `thresholds` and `sampling` can be overridden at runtime from the
+# Azure IoT Hub device twin (desired properties). The twin always wins.
+
+device:
+  id: coldstore-pi-01
+  site: "Warehouse A / Cold Room 1"
+  firmware: "1.4.2"
+
+# Product profile: pharma (2–8 °C), produce (0–5 °C), frozen (−25…−15 °C)
+profile: pharma
+
+thresholds:
+  temp_min_c: 2.0
+  temp_max_c: 8.0
+  rh_min_pct: 35.0
+  rh_max_pct: 75.0
+  temp_hysteresis_c: 0.3        # alarm clears only 0.3 °C inside the limit
+  rh_hysteresis_pct: 2.0
+  alarm_delay_samples: 2        # consecutive out-of-range samples before ALARM
+  warn_margin_c: 0.5            # WARN band just inside the temperature limits
+  door_open_max_s: 120          # door left open longer than this raises DOOR_OPEN
+  sensor_disagree_c: 1.5        # |DS18B20 − DHT22| above this raises SENSOR_DISAGREE
+
+sampling:
+  interval_s: 5
+  dht22_retries: 3
+
+gpio:                            # BCM numbering
+  dht22_data: 17                 # physical pin 11, 10 kΩ pull-up to 3V3
+  ds18b20_data: 4                # physical pin 7, 1-Wire, 4.7 kΩ pull-up to 3V3
+  door_reed: 27                  # physical pin 13, to GND, internal pull-up
+  ack_button: 22                 # physical pin 15, to GND, internal pull-up
+  buzzer: 18                     # physical pin 12 → 1 kΩ → 2N2222 base
+  led_red: 23                    # physical pin 16 → 330 Ω → LED → GND
+  led_green: 24                  # physical pin 18
+  led_amber: 25                  # physical pin 22 (cloud offline / buffering)
+  lcd_i2c_address: 0x27          # PCF8574 backpack on SDA=GPIO2, SCL=GPIO3
+
+storage:
+  db_path: /var/lib/coldstore/queue.db
+  capacity_rows: 100000          # ~5.8 days at 5 s sampling; oldest dropped when full
+
+cloud:
+  # Read from the environment so the secret never lives in the repo:
+  #   export IOTHUB_DEVICE_CONNECTION_STRING="HostName=...;DeviceId=...;SharedAccessKey=..."
+  connection_string_env: IOTHUB_DEVICE_CONNECTION_STRING
+  batch_size: 50                 # readings per backlog message during sync
+  sync_interval_s: 0.5           # pause between backlog batches
+  puback_timeout_s: 4
+  backoff_initial_s: 1
+  backoff_max_s: 32
+  keep_alive_s: 60

@@ -1,0 +1,57 @@
+-- Azure Stream Analytics job: coldchain-asa
+-- Input  : iothub        (IoT Hub built-in endpoint, consumer group "asa")
+-- Outputs: agg1m         (Cosmos DB container "aggregates", partition key /deviceId)
+--          cloudalerts   (Service Bus queue "cold-alerts" — used for the cloud-only baseline device)
+--          powerbi       (optional Power BI dataset for management reporting)
+--
+-- TIMESTAMP BY the device's own timestamp, not arrival time, so readings that
+-- arrive late after an outage land in the minute they were measured. The
+-- late-arrival policy on the job is set to 10 minutes; older events are
+-- adjusted to the window edge (documented limitation).
+
+WITH Flat AS (
+    -- live telemetry: one reading per message
+    SELECT deviceId, CAST(ts AS datetime) AS ts, tempC, rh, door, 0 AS backfilled
+    FROM iothub TIMESTAMP BY ts
+    WHERE type = 'telemetry'
+
+    UNION
+
+    -- backlog batches sent after reconnection: explode the readings array
+    SELECT i.deviceId, CAST(r.ArrayValue.ts AS datetime) AS ts,
+           r.ArrayValue.t AS tempC, r.ArrayValue.h AS rh,
+           CASE WHEN r.ArrayValue.d = 1 THEN 'open' ELSE 'closed' END AS door, 1 AS backfilled
+    FROM iothub i TIMESTAMP BY ts
+    CROSS APPLY GetArrayElements(i.readings) AS r
+    WHERE i.type = 'batch'
+)
+
+-- 1-minute aggregates for the historical trend chart and time-in-range KPI
+SELECT
+    deviceId,
+    System.Timestamp() AS windowEnd,
+    AVG(tempC) AS avgTemp, MIN(tempC) AS minTemp, MAX(tempC) AS maxTemp,
+    AVG(rh) AS avgRh, MAX(rh) AS maxRh,
+    COUNT(*) AS samples,
+    SUM(CASE WHEN tempC BETWEEN 2.0 AND 8.0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pctInRange,
+    SUM(backfilled) AS backfilledSamples
+INTO agg1m
+FROM Flat
+GROUP BY deviceId, TumblingWindow(minute, 1)
+
+-- Cloud-side rule for devices WITHOUT edge logic (the baseline we compare
+-- against): two consecutive readings above the limit inside 15 s → alert.
+SELECT
+    'alert' AS type, deviceId,
+    CONCAT('ASA-', CAST(DATEDIFF(second, CAST('1970-01-01' AS datetime), System.Timestamp()) AS nvarchar(max))) AS alertId,
+    'HIGH_TEMP' AS alarm, 'RAISED' AS state, 'critical' AS severity,
+    MAX(tempC) AS value, 8.0 AS threshold,
+    MIN(ts) AS firstBreachAt, System.Timestamp() AS raisedAt, System.Timestamp() AS localActionAt,
+    0 AS bufferedMs
+INTO cloudalerts
+FROM Flat
+WHERE tempC > 8.0 AND deviceId = 'baseline-node-02'
+GROUP BY deviceId, SlidingWindow(second, 15)
+HAVING COUNT(*) >= 2
+
+SELECT deviceId, ts, tempC, rh, door INTO powerbi FROM Flat

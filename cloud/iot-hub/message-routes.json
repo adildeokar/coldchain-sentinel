@@ -1,0 +1,14 @@
+{
+  "_comment": "IoT Hub routing as deployed by provision.sh (ARM 'properties.routing' fragment).",
+  "endpoints": {
+    "serviceBusQueues": [
+      { "name": "sb-alerts", "connectionString": "Endpoint=sb://coldchain-sb.servicebus.windows.net/;...;EntityPath=cold-alerts" }
+    ]
+  },
+  "routes": [
+    { "name": "alerts-route",    "source": "DeviceMessages",   "condition": "alert = 'true'",  "endpointNames": ["sb-alerts"], "isEnabled": true },
+    { "name": "telemetry-route", "source": "DeviceMessages",   "condition": "alert = 'false'", "endpointNames": ["events"],    "isEnabled": true },
+    { "name": "twin-route",      "source": "TwinChangeEvents", "condition": "true",            "endpointNames": ["events"],    "isEnabled": true }
+  ],
+  "fallbackRoute": { "name": "$fallback", "source": "DeviceMessages", "condition": "true", "endpointNames": ["events"], "isEnabled": true }
+}

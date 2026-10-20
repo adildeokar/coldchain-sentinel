@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "IOTHUB_EVENTHUB_NAME": "<Event Hub-compatible name from IoT Hub → Built-in endpoints>",
+    "IoTHubEventHubConnection": "Endpoint=sb://<ihsuprod...>.servicebus.windows.net/;SharedAccessKeyName=service;SharedAccessKey=<key>;EntityPath=<name>",
+    "ServiceBusConnection": "Endpoint=sb://coldchain-sb.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=<key>",
+    "CosmosDbConnection": "AccountEndpoint=https://coldchain-cosmos.documents.azure.com:443/;AccountKey=<key>;",
+    "AzureSignalRConnectionString": "Endpoint=https://coldchain-signalr.service.signalr.net;AccessKey=<key>;Version=1.0;",
+    "NOTIFY_LOGIC_APP_URL": "https://prod-00.centralindia.logic.azure.com/workflows/<id>/triggers/manual/paths/invoke?..."
+  }
+}

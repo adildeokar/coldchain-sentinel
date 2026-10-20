@@ -1,0 +1,21 @@
+{
+  "deviceId": "coldstore-pi-01",
+  "tags": { "site": "warehouse-a", "room": "cold-room-1" },
+  "properties": {
+    "desired": {
+      "profile": "pharma",
+      "thresholds": { "temp_min_c": 2.0, "temp_max_c": 8.0, "rh_min_pct": 35, "rh_max_pct": 75, "alarm_delay_samples": 2 },
+      "sampleIntervalSec": 5,
+      "$version": 4
+    },
+    "reported": {
+      "profile": "pharma",
+      "thresholds": { "temp_min_c": 2.0, "temp_max_c": 8.0, "rh_min_pct": 35, "rh_max_pct": 75, "alarm_delay_samples": 2 },
+      "sampleIntervalSec": 5,
+      "firmware": "1.4.2",
+      "queueDepth": 0,
+      "connectivity": "online",
+      "$version": 57
+    }
+  }
+}

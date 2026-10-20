@@ -1,0 +1,11 @@
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+firmware/data/
+*.db
+*.db-wal
+*.db-shm
+cloud/functions/local.settings.json
+.DS_Store
+Thumbs.db

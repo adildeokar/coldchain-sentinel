@@ -1,0 +1,11 @@
+# Raspberry Pi OS (Bookworm) — install inside a venv:  python3 -m venv .venv && . .venv/bin/activate
+azure-iot-device>=2.14.0          # MQTT/TLS client for Azure IoT Hub (twin, direct methods, D2C)
+adafruit-circuitpython-dht>=4.0.4 # DHT22 driver
+adafruit-blinka>=8.47.0           # `board` pin names used by the Adafruit driver
+gpiozero>=2.0.1                   # buzzer, LEDs, buttons, reed switch
+lgpio>=0.2.2.0                    # gpiozero pin factory on Pi 5 / Bookworm
+RPLCD>=1.3.1                      # HD44780 LCD over a PCF8574 I2C backpack
+smbus2>=0.4.3
+PyYAML>=6.0.2
+psutil>=5.9.8
+# --simulate on a PC needs only: PyYAML, psutil (optional)

@@ -1,0 +1,22 @@
+# /etc/systemd/system/coldstore.service
+# sudo systemctl enable --now coldstore   ·   journalctl -u coldstore -f
+[Unit]
+Description=ColdChain Sentinel cold-storage edge monitor
+After=network-online.target time-sync.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=coldstore
+Group=gpio
+WorkingDirectory=/opt/coldstore/firmware
+EnvironmentFile=/etc/coldstore/iothub.env
+ExecStart=/opt/coldstore/.venv/bin/python main.py
+# Monitoring must come back by itself after a crash or a power cut
+Restart=always
+RestartSec=3
+StateDirectory=coldstore
+SupplementaryGroups=i2c
+
+[Install]
+WantedBy=multi-user.target
